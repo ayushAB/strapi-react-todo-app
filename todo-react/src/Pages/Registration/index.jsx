@@ -1,6 +1,44 @@
-import { LockClosedIcon } from '@heroicons/react/solid'
+import React from "react"
+import {Link,useHistory} from "react-router-dom";
+import axios from 'axios'
+import { useSignIn,useIsAuthenticated } from 'react-auth-kit'
 
 export default function RegistrationPage() {
+  const isAuthenticated = useIsAuthenticated();
+  const history = useHistory();
+  if(isAuthenticated()){
+      // Redirect to Dashboard
+      history.push("/dashboard");
+  }
+  const signIn = useSignIn();
+  const [error , setError] = React.useState({errorMessage:'',hasError: false});
+  const [state, setState] = React.useState({username:'' ,email: '', password: ''});
+   const onSubmit = async (e) => {
+      e.preventDefault()
+      try{
+        const res = await axios.post('/auth/local/register', state);
+        if(res.status === 200){
+          console.log(res)
+          if(signIn({
+            token: res.data.jwt,
+            tokenType: "Bearer",
+            authState: res.data.user,
+            expiresIn: 86400000
+          })){
+              // Redirect or do-something
+          }
+        }
+      }catch (errorres){
+        setError( () =>{
+          return {
+            errorMessage: errorres.response.data.data[0].messages[0].message,
+            hasError: true 
+          }
+        });
+      }
+     
+          
+  }
   return (
     <>
       <div className="min-h-full flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
@@ -13,9 +51,25 @@ export default function RegistrationPage() {
             />
             <h2 className="mt-6 text-center text-3xl font-extrabold text-white">Register</h2>
           </div>
-          <form className="mt-8 space-y-6" action="#" method="POST">
+          <form className="mt-8 space-y-6" onSubmit={onSubmit} >
             <input type="hidden" name="remember" defaultValue="true" />
             <div className="rounded-md shadow-sm space-y-3">
+              
+              <div>
+                <label htmlFor="password" className="sr-only">
+                 Username
+                </label>
+                <input
+                  id="password"
+                  name="password"
+                  type="text"
+                  autoComplete="current-password"
+                  required
+                  className="appearance-none  relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                  placeholder="Username"
+                  onChange={(e)=>setState({...state, username: e.target.value})}
+                />
+              </div>
               <div>
                 <label htmlFor="email-address" className="sr-only">
                   Email address
@@ -28,6 +82,7 @@ export default function RegistrationPage() {
                   required
                   className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                   placeholder="Email address"
+                  onChange={(e)=>setState({...state, email: e.target.value})}
                 />
               </div>
               <div>
@@ -42,26 +97,10 @@ export default function RegistrationPage() {
                   required
                   className="appearance-none  relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                   placeholder="Password"
-                />
-              </div>
-              <div>
-                <label htmlFor="password" className="sr-only">
-                 Confirm Password
-                </label>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  required
-                  className="appearance-none  relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                  placeholder="Confirm Password"
+                  onChange={(e)=>setState({...state, password: e.target.value})}
                 />
               </div>
             </div>
-
-            
-
             <div>
               <button
                 type="submit"
@@ -70,9 +109,17 @@ export default function RegistrationPage() {
                 Register
               </button>
             </div>
+            <div className="text-center w-full mt-6">
+              <span className="text-sm font-extrabold text-red-400">{ error.errorMessage }</span>
+            </div>
+            <div className="text-center w-full mt-6">
+              <Link className="text-sm font-extrabold text-gray-400 " to="/">Already have a account?</Link>
+            </div>
           </form>
         </div>
       </div>
     </>
+    
   )
+  
 }

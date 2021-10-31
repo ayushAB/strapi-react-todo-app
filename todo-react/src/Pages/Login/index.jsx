@@ -1,6 +1,42 @@
 import { LockClosedIcon } from '@heroicons/react/solid'
-
+import React from "react";
+import {Link, useHistory} from "react-router-dom";
+import {useSignIn,useIsAuthenticated } from 'react-auth-kit';
+import axios from 'axios'
 export default function LoginPage() {
+
+  const isAuthenticated = useIsAuthenticated();
+  const history = useHistory();
+  const signIn = useSignIn();
+  if(isAuthenticated()){
+      // Redirect to Dashboard
+      history.push("/dashboard");
+  }
+  const [state,setState] = React.useState({identifier:'', password:''});
+  const [error , setError] = React.useState({errorMessage:'',hasError: false});
+
+  const onSubmit = async (e) => {
+    e.preventDefault()
+      try{
+        const res = await axios.post('/auth/local', state);
+        if(res.status === 200){
+          if(signIn({
+            token: res.data.jwt,
+            tokenType: "Bearer",
+            authState: res.data.user,
+            expiresIn: 86400000
+          })){  }
+        }
+      }catch (errorres){
+        setError( () =>{
+          return {
+            errorMessage: errorres.response.data.data[0].messages[0].message,
+            hasError: true 
+          }
+        });
+      }
+  }
+
   return (
     <>
       <div className="min-h-full flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
@@ -12,9 +48,9 @@ export default function LoginPage() {
               alt="Workflow"
             />
             <h2 className="mt-6 text-center text-3xl font-extrabold text-white">Sign in to your account</h2>
-        
+           
           </div>
-          <form className="mt-8 space-y-6" action="#" method="POST">
+          <form className="mt-8 space-y-6" onSubmit={onSubmit} >
             <input type="hidden" name="remember" defaultValue="true" />
             <div className="rounded-md shadow-sm -space-y-px">
               <div>
@@ -29,6 +65,7 @@ export default function LoginPage() {
                   required
                   className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                   placeholder="Email address"
+                  onChange={(e)=>setState({...state, identifier: e.target.value})}
                 />
               </div>
               <div>
@@ -43,22 +80,13 @@ export default function LoginPage() {
                   required
                   className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                   placeholder="Password"
+                  onChange={(e)=>setState({...state, password: e.target.value})}
                 />
               </div>
             </div>
 
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <input
-                  id="remember-me"
-                  name="remember-me"
-                  type="checkbox"
-                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-300">
-                  Remember me
-                </label>
-              </div>
+            <div className="flex items-center justify-end">
+              
 
               <div className="text-sm">
                 <a href="www.google.com" className="font-medium text-gray-400 hover:text-indigo-500">
@@ -77,6 +105,12 @@ export default function LoginPage() {
                 </span>
                 Sign in
               </button>
+            </div>
+            <div className="text-center w-full mt-6">
+              <span className="text-sm font-extrabold text-red-400">{ error.errorMessage }</span>
+            </div>
+            <div className="text-center w-full mt-6">
+              <Link className="text-sm font-extrabold text-gray-400 " to="/register">Sign Up</Link>
             </div>
           </form>
         </div>
