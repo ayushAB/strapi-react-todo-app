@@ -5,4 +5,19 @@
  * to customize this controller
  */
 
-module.exports = {};
+module.exports = {
+
+    find: async (ctx) => {
+        const user = ctx.state.user;    
+        if (!user) {
+          return ctx.badRequest(null, [{ messages: [{ id: 'No authorization header was found' }] }]);
+        }
+        const data = await strapi.services.todo.find({user:user.id});  
+    
+        if(!data){
+          return ctx.notFound();
+        }
+    
+        ctx.send(data);
+      }
+};

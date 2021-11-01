@@ -7,9 +7,10 @@ import axios from "axios";
 export default function Dashboard() {
   const signOut = useSignOut();
   const [todos, setTodos] = useState([]);
+  const [filterredTodos, setFilterTodos] = useState([]);
   const auth = useAuthUser();
   const authHeader = useAuthHeader();
-  const [newTodo, setNewTodo] = useState({Completed: false, Description: "", users_permissions_user: auth().id});
+  const [newTodo, setNewTodo] = useState({Completed: false, Description: "", user: auth().id});
   const Headers = {
     headers: {
       Authorization: authHeader(),
@@ -19,8 +20,18 @@ export default function Dashboard() {
     try {
       const { data } = await axios.get("/todos",Headers);
       setTodos(data);
+      setFilterTodos(data)
     } catch (error) {
       console.log(error);
+    }
+  }
+
+  function filetedTodos(status) {
+    if(status !== undefined) {
+      const filtered = todos.filter(  todo => todo.Completed === status)
+      setFilterTodos(filtered)
+    }else{
+      setFilterTodos(todos)
     }
   }
   useEffect(() => {
@@ -30,14 +41,31 @@ export default function Dashboard() {
 
   async function onSubmit(e) {
     e.preventDefault();
-    console.log(newTodo);
-    //const resposne =  await axios.post("/todos", newTodo ,Headers);
-    // if(resposne.status === 200) {
-    //   setTodos((oldTodo)=>{
-    //     return [...oldTodo, resposne.data];
-    //   })
-    //   setNewTodo({Completed: false, Description: "", users_permissions_user: auth().id})
-    // } 
+    const resposne =  await axios.post("/todos", newTodo ,Headers);
+    if(resposne.status === 200) {
+      setTodos((oldTodo)=>{
+        setFilterTodos([...oldTodo,resposne.data]);
+        return [...oldTodo, resposne.data];
+      })
+      setNewTodo({Completed: false, Description: "", users_permissions_user: auth().id})
+    } 
+   
+  }
+  async function updateTodo(todo){
+    todo.Completed = true;
+    try {
+      const response = await axios.put("/todos/" + todo.id,todo,Headers);
+      if(response.status === 200) {
+        setTodos((oldTodo)=>{
+          const objIndex = oldTodo.findIndex((todoold => todo.id === todoold.id));
+          oldTodo[objIndex] = response.data; 
+          return oldTodo;
+        })
+        filetedTodos(false);
+      } 
+    }catch(error){
+      console.log(error)
+    }
   }
 
   return (
@@ -55,11 +83,13 @@ export default function Dashboard() {
                   />
                 </div>
                 <div className="hidden md:block">
+                  
                   <div
-                    className="ml-10 flex  items-center space-x-1 group cursor-pointer"
+                    className="ml-10 flex  items-center space-x-1 group"
                     onClick={() => signOut()}
                   >
-                    <span className="text-white group-hover:text-gray-900">
+                    <span className="mr-2 text-white">{ auth().username }</span>
+                    <span className="text-white group-hover:text-gray-900 cursor-pointer">
                       Log out
                     </span>
                     <LogoutIcon
@@ -93,8 +123,9 @@ export default function Dashboard() {
           </form>
         </div>
         <main>
-          <div className="max-w-3xl mx-auto px-2 rounded shadow-md bg-gray-700 mt-4 h-full">
-            {todos.map((todo, index) => {
+          <div className="max-w-3xl mx-auto px-2 rounded shadow-md bg-gray-700 mt-4 h-96 overflow-y-auto">
+            {
+            filterredTodos.map((todo, index) => {
               return (
                 <div
                   key={index}
@@ -102,23 +133,26 @@ export default function Dashboard() {
                 >
                   <div
                     className={
-                      "h-5 w-5 border border-white rounded-full mr-2 " +
+                      "h-5 w-5 border border-white rounded-full mr-2 cursor-pointer relative " +
                       (todo.Completed ? "bg-green-600" : "")
                     }
-                  ></div>
-                  <div className="text-white text-base">{todo.Description}</div>
+                  >
+                   
+                  </div>
+                  <div className="flex justify-between w-full"><div className="text-white text-base">{todo.Description}</div>
+                  { !todo.Completed ? <div className="bg-gray-500 text-white text-center p-1 rounded cursor-pointer hover:bg-gray-600" onClick={() => updateTodo(todo)}>Mark as completed</div>:""}
+                  </div>
                 </div>
               );
             })}
+          </div>
+          <div className="max-w-3xl mx-auto px-2 rounded shadow-md bg-gray-700 mt-4">
             <div className="h-14 flex justify-between text-gray-500 items-center px-2">
-              <div className="hover:text-white">4 items left</div>
+              <div className="hover:text-white">{todos.length}{todos.length>1 ?" items":" item"} </div>
               <div className="text-gray-500 flex space-x-3">
-                <div className="hover:text-white cursor-pointer">All</div>
-                <div className="hover:text-white cursor-pointer">Completed</div>
-                <div className="hover:text-white cursor-pointer">Active</div>
-              </div>
-              <div className="hover:text-white cursor-pointer">
-                Clear completed
+                <div className="hover:text-white cursor-pointer" onClick={() =>filetedTodos(undefined)}>All</div>
+                <div className="hover:text-white cursor-pointer" onClick={() =>filetedTodos(true)}>Completed</div>
+                <div className="hover:text-white cursor-pointer" onClick={() => filetedTodos(false)}>Active</div>
               </div>
             </div>
           </div>

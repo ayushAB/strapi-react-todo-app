@@ -20,10 +20,9 @@
       "type": "boolean",
       "default": false
     },
-    "users_permissions_user": {
+    "user": {
       "plugin": "users-permissions",
-      "model": "user",
-      "via": "todo"
+      "model": "user"
     }
   }
 }
