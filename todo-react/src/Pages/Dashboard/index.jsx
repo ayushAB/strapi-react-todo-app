@@ -1,5 +1,5 @@
 /* This example requires Tailwind CSS v2.0+ */
-import { LogoutIcon, PlusCircleIcon } from "@heroicons/react/solid";
+import { LogoutIcon, PlusCircleIcon , TrashIcon} from "@heroicons/react/solid";
 import React, { useEffect, useState } from "react";
 import { useSignOut, useAuthUser, useAuthHeader } from "react-auth-kit";
 import axios from "axios";
@@ -64,6 +64,21 @@ export default function Dashboard() {
         filetedTodos(false);
       } 
     }catch(error){
+      console.log(error)
+    }
+  }
+ async function deleteTodo(todo){
+    try {
+      const response = await axios.delete("/todos/" + todo.id,Headers);
+      if(response.status === 200) {
+         setFilterTodos((todoold) =>{
+          const objIndex = todoold.findIndex((todoold => todo.id === todoold.id));
+          todoold.splice(objIndex,1);
+           return todoold;
+         })
+      }
+    }
+    catch(error){
       console.log(error)
     }
   }
@@ -140,7 +155,10 @@ export default function Dashboard() {
                    
                   </div>
                   <div className="flex justify-between w-full"><div className="text-white text-base">{todo.Description}</div>
-                  { !todo.Completed ? <div className="bg-gray-500 text-white text-center p-1 rounded cursor-pointer hover:bg-gray-600" onClick={() => updateTodo(todo)}>Mark as completed</div>:""}
+                  <div className="flex items-center ">
+                    { !todo.Completed ? <div className="bg-gray-500 text-white text-center p-1 rounded cursor-pointer hover:bg-gray-600" onClick={() => updateTodo(todo)}>Mark as completed</div>:""}
+                    <TrashIcon className="ml-2 h-5 w-5 text-red-400 cursor-pointer" onClick={() => deleteTodo(todo)}/>
+                  </div>
                   </div>
                 </div>
               );
