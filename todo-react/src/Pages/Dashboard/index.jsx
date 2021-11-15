@@ -18,7 +18,7 @@ export default function Dashboard() {
   };
   async function fetchData() {
     try {
-      const { data } = await axios.get("/todos",Headers);
+      const { data } = await axios.get("/todos?Completed=true",Headers);
       setTodos(data);
       setFilterTodos(data)
     } catch (error) {
@@ -53,6 +53,7 @@ export default function Dashboard() {
   }
   async function updateTodo(todo){
     todo.Completed = true;
+    todo.users_permissions_user = auth().id;
     try {
       const response = await axios.put("/todos/" + todo.id,todo,Headers);
       if(response.status === 200) {

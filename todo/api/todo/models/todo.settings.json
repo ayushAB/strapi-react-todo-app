@@ -22,7 +22,8 @@
     },
     "user": {
       "plugin": "users-permissions",
-      "model": "user"
+      "model": "user",
+      "via": "user_ids"
     }
   }
 }
